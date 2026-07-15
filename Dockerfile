@@ -1,8 +1,6 @@
 ARG R_VERSION=4.6.1
 FROM rocker/r-ver:${R_VERSION}
 
-ARG VERSION=main
-
 # System libraries required by Seurat and its dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libhdf5-dev \
@@ -55,9 +53,8 @@ RUN Rscript -e "\
 
 RUN Rscript -e "\
     options(warn = 2); \
-    remotes::install_github('satijalab/Mixscale', ref = Sys.getenv('VERSION', unset = 'main')); \
-    " \
-    VERSION=${VERSION}
+    remotes::install_github('satijalab/Mixscale'); \
+    "
 
 # Set OpenMP thread count for runtime use only — value 0 is invalid during build (libgomp rejects it)
 ENV OMP_NUM_THREADS=0

@@ -46,7 +46,6 @@ jobs:
         file: ./Dockerfile
         push: true
         platforms: linux/amd64
-        build-args: VERSION=${{ steps.version.outputs.value }}
         tags: |
           sjfleming/mixscale:${{ steps.version.outputs.value }}
           sjfleming/mixscale:latest
