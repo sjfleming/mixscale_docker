@@ -21,24 +21,35 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libopenblas-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Use all cores for BLAS operations at runtime (0 = auto-detect)
+# OpenBLAS auto-detects cores during build and runtime (0 = auto-detect, valid for OpenBLAS)
 ENV OPENBLAS_NUM_THREADS=0
-ENV OMP_NUM_THREADS=0
 
-# Use a fast CRAN mirror and install packages without recommended extras
+# Use Posit Package Manager for pre-built Linux binaries — avoids compiling Seurat/RcppEigen from source
 RUN Rscript -e "\
-    options(repos = c(CRAN = 'https://cloud.r-project.org'), warn = 2); \
+    options( \
+        repos = c(PPM = 'https://packagemanager.posit.co/cran/__linux__/noble/latest', \
+                  CRAN = 'https://cloud.r-project.org'), \
+        warn = 2 \
+    ); \
     install.packages(c('BiocManager', 'remotes', 'RhpcBLASctl'), Ncpus = parallel::detectCores()); \
     "
 
 RUN Rscript -e "\
-    options(repos = c(CRAN = 'https://cloud.r-project.org'), warn = 2); \
+    options( \
+        repos = c(PPM = 'https://packagemanager.posit.co/cran/__linux__/noble/latest', \
+                  CRAN = 'https://cloud.r-project.org'), \
+        warn = 2 \
+    ); \
     install.packages(c('Seurat', 'PMA', 'protoclust', 'ggridges', 'gplots'), \
         Ncpus = parallel::detectCores()); \
     "
 
 RUN Rscript -e "\
-    options(warn = 2); \
+    options( \
+        repos = c(PPM = 'https://packagemanager.posit.co/cran/__linux__/noble/latest', \
+                  CRAN = 'https://cloud.r-project.org'), \
+        warn = 2 \
+    ); \
     BiocManager::install('glmGamPoi', ask = FALSE, update = FALSE); \
     "
 
@@ -47,3 +58,6 @@ RUN Rscript -e "\
     remotes::install_github('satijalab/Mixscale', ref = Sys.getenv('VERSION', unset = 'main')); \
     " \
     VERSION=${VERSION}
+
+# Set OpenMP thread count for runtime use only — value 0 is invalid during build (libgomp rejects it)
+ENV OMP_NUM_THREADS=0
